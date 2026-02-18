@@ -1,30 +1,47 @@
 task.wait(5)
 
-local found = false
+local biggest = ""
+local biggestLen = 0
 
 for _, v in pairs(getgc(true)) do
     if type(v) == "function" then
+        
+        local success, consts = pcall(debug.getconstants, v)
+        if success and consts then
+            for _, c in pairs(consts) do
+                if type(c) == "string" then
+                    if #c > biggestLen then
+                        biggest = c
+                        biggestLen = #c
+                    end
+                end
+            end
+        end
+        
         local ups = debug.getupvalues(v)
         for _, u in pairs(ups) do
-            if type(u) == "string" and #u > 200 then
-                found = true
-                
-                if setclipboard then
-                    setclipboard(u)
-                elseif toclipboard then
-                    toclipboard(u)
+            if type(u) == "string" then
+                if #u > biggestLen then
+                    biggest = u
+                    biggestLen = #u
                 end
-                
-                print("DECRYPTED CODE COPIED TO CLIPBOARD")
-                break
             end
         end
     end
 end
 
-if not found then
-    print("Nothing found. Try running again after script fully loads.")
+if biggestLen > 0 then
+    if setclipboard then
+        setclipboard(biggest)
+    elseif toclipboard then
+        toclipboard(biggest)
+    end
+    
+    print("Longest string copied. Length:", biggestLen)
+else
+    print("Nothing useful found.")
 end
+
 
 
 
