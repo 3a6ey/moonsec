@@ -1,78 +1,64 @@
-local Players = game:GetService("Players")
-local lp = Players.LocalPlayer
-local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+local CoreGui = game:GetService("CoreGui")
 
-local dangerDistance = 5
-local isEscaping = false
-local autoFarmPaused = false
-local teleportCooldown = false
-
-local function getNextbots()
-    local bots = {}
-    local folder = workspace:FindFirstChild("Game")
-    if folder and folder:FindFirstChild("Players") then
-        for _, v in pairs(folder.Players:GetChildren()) do
-            if not Players:FindFirstChild(v.Name) then
-                table.insert(bots, v)
-            end
-        end
-    end
-    return bots
+if CoreGui:FindFirstChild("ToraScript") then
+    CoreGui.ToraScript:Destroy()
 end
 
-local function getDistance(bot)
-    if bot:FindFirstChild("HumanoidRootPart") and hrp then
-        return (bot.HumanoidRootPart.Position - hrp.Position).Magnitude
-    end
-    return math.huge
-end
 
-task.spawn(function()
-    while getgenv().Avoid do
-        task.wait(0.2)
+local library = loadstring(game:HttpGet(
+    "https://raw.githubusercontent.com/liebertsx/Tora-Library/main/src/librarynew",
+    true
+))()
 
-        if not lp.Character then continue end
-        hrp = lp.Character:FindFirstChild("HumanoidRootPart")
-        if not hrp then continue end
+-
+local window = library:CreateWindow("Evade (EVENT)")
 
-        local bots = getNextbots()
-        local danger = false
 
-        for _, bot in pairs(bots) do
-            if getDistance(bot) <= dangerDistance then
-                danger = true
-                break
-            end
-        end
+local main = window:AddFolder("Main")
 
-        if danger and not isEscaping and not teleportCooldown then
-            isEscaping = true
-            autoFarmPaused = true
-            teleportCooldown = true
 
-            hrp.CFrame = CFrame.new(
-                math.random(-200,200),
-                20,
-                math.random(-200,200)
-            )
+main:AddToggle({
+    text = "Collect Items",
+    flag = "collect_items",
+    callback = function(state)
+        _G.Items = state
+        print("Items:", state)
 
-            task.wait(2)
-            teleportCooldown = false
-        end
+        if state then
+            task.spawn(function()
+                while _G.Items do
+                    task.wait()
 
-        if isEscaping then
-            local safe = true
-            for _, bot in pairs(bots) do
-                if getDistance(bot) <= dangerDistance then
-                    safe = false
-                    break
+                    pcall(function()
+                        for _, v in pairs(workspace.Game.Effects.Tickets:GetChildren()) do
+                            local plr = game.Players.LocalPlayer
+                            if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                                plr.Character.HumanoidRootPart.CFrame =
+                                    CFrame.new(v.HumanoidRootPart.Position)
+                                task.wait(0.1)
+                            end
+                        end
+                    end)
                 end
-            end
-
-            if safe then
-                isEscaping = false
-                autoFarmPaused = false
-            end
+            end)
         end
     end
-end)
+})
+
+
+main:AddToggle({
+    text = "Avoid Nextbot",
+    flag = "avoid_nextbot",
+    callback = function(state)
+        _G.Avoid = state
+        print("Avoid:", state)
+    end
+})
+
+
+main:AddLabel({
+    text = "YouTube: Tora IsMe",
+    type = "label"
+})
+
+library:Init()
